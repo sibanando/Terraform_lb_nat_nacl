@@ -12,9 +12,18 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [aws_security_group.allow_tls.id]
   associate_public_ip_address = true
   count = 2
-
+  user_data = <<-EOF
+  #!/bin/bash
+  sudo yum update -y
+  sudo yum install docker -y
+  sudo usermod -aG docker $USER
+  sudo usermod -a -G docker ec2-user
+  sudo systemctl enable docker.service
+  sudo systemctl start docker.service
+  sudo docker run -d -p 80:80 nginx:latest
+  EOF
   tags = {
-    Name = "WebServer"
+    Name = "WebServer-${count.index + 1}"
   }
 
   provisioner "file" {
